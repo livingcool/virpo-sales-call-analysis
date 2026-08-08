@@ -1045,11 +1045,12 @@ export default function DashboardPage() {
 
                     <div className="space-y-4 text-xs">
                       {[
-                        { key: 'opening', label: '1. Opening & Rapport', max: 15 },
-                        { key: 'discovery', label: '2. Needs Discovery', max: 20 },
-                        { key: 'pitch_clarity', label: '3. Pitch & Language Match', max: 20 },
-                        { key: 'objection_handling', label: '4. Objection Handling', max: 20 },
-                        { key: 'closing', label: '5. Closing & Next Steps', max: 15 },
+                        { key: 'opening', label: '1. Preparation & Opening', max: 10 },
+                        { key: 'discovery', label: '2. Clarify, Label & Past Pain', max: 30 },
+                        { key: 'pitch_clarity', label: '3. Selling the Destination', max: 15 },
+                        { key: 'objection_handling', label: '4. Concerns & Active Looping', max: 20 },
+                        { key: 'closing', label: '5. Reinforce Decision & Onboarding', max: 10 },
+                        { key: 'talk_listen', label: '6. Presence, Tonality & Conviction', max: 15 },
                       ].map(({ key, label, max }) => {
                         const score = currentAnalysis?.sub_scores?.[key] ?? Math.round(max * 0.75);
                         const pct = (score / max) * 100;
