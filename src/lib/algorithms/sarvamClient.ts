@@ -130,11 +130,15 @@ async function transcribeAudioWithGemini(
   audioBuffer: Buffer,
   filename: string
 ): Promise<TranscriptSegment[]> {
-  const extension = filename.toLowerCase().split('.').pop() || 'wav';
-  let mimeType = 'audio/wav';
-  if (extension === 'mp3') mimeType = 'audio/mp3';
-  else if (extension === 'm4a') mimeType = 'audio/x-m4a';
+  const extension = filename.toLowerCase().split('.').pop() || 'mp3';
+  let mimeType = 'audio/mpeg';
+  if (extension === 'wav') mimeType = 'audio/wav';
+  else if (extension === 'mp3') mimeType = 'audio/mpeg';
+  else if (extension === 'm4a') mimeType = 'audio/mp4';
   else if (extension === 'mp4') mimeType = 'audio/mp4';
+  else if (extension === 'ogg') mimeType = 'audio/ogg';
+  else if (extension === 'webm') mimeType = 'audio/webm';
+  else mimeType = 'audio/mpeg';
 
   const base64Audio = audioBuffer.toString('base64');
   const apiKey = GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
@@ -144,7 +148,7 @@ async function transcribeAudioWithGemini(
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro-latest'];
+  const candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.5-pro'];
 
   const prompt = `
 Listen to this uploaded sales call audio recording file carefully.

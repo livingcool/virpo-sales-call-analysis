@@ -45,7 +45,7 @@ export async function analyzeCallWithGemini(
 ): Promise<{ analysis: Analysis; insights: Insight[] }> {
   try {
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro-latest'];
+    const candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.5-pro'];
 
     const transcriptText = transcriptSegments
       .map((s) => `[${s.start_time}] ${s.speaker}: ${s.text}`)
