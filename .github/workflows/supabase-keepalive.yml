@@ -1,0 +1,57 @@
+name: Supabase Keep-Alive Ping
+
+# Supabase free-tier projects pause after 7 days of inactivity.
+# This workflow pings the REST API every 3 days to prevent pausing.
+# Configure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in GitHub Repository Secrets.
+on:
+  schedule:
+    - cron: '30 6 */3 * *'   # Every 3 days at 06:30 UTC
+  workflow_dispatch:          # Manual trigger from GitHub Actions UI
+
+jobs:
+  keep-alive:
+    name: Ping Supabase DB
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping Supabase REST API
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = process.env.SUPABASE_URL?.trim();
+            const key  = process.env.SUPABASE_KEY?.trim();
+
+            if (!url || !key) {
+              core.setFailed('SUPABASE_URL or SUPABASE_KEY secret is missing. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in GitHub Repository Secrets.');
+              return;
+            }
+
+            console.log(`⏰ Keep-alive ping — ${new Date().toISOString()}`);
+
+            try {
+              const res = await fetch(`${url}/rest/v1/calls?select=id&limit=1`, {
+                method: 'GET',
+                headers: {
+                  'apikey': key,
+                  'Authorization': `Bearer ${key}`,
+                  'Content-Type': 'application/json',
+                },
+                signal: AbortSignal.timeout(15000),
+              });
+
+              console.log(`📡 HTTP Status: ${res.status}`);
+
+              if (res.status < 500) {
+                console.log('✅ Supabase is alive — project will not go dormant.');
+              } else {
+                core.warning(`Supabase returned ${res.status} — may need attention.`);
+              }
+            } catch (err) {
+              core.warning(`Could not reach Supabase: ${err.message}`);
+              core.warning('If project is paused, visit https://supabase.com/dashboard and click Restore.');
+              console.log('⚠️ Supabase unreachable — project may be paused.');
+            }
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
