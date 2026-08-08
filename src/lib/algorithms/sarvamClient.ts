@@ -148,7 +148,7 @@ async function transcribeAudioWithGemini(
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.5-pro'];
+  const candidateModels = ['gemini-3.1-flash-lite', 'gemini-2.5-flash-lite', 'gemini-2.0-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
 
   const prompt = `
 Listen to this uploaded sales call audio recording file carefully.
