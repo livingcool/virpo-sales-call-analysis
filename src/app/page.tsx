@@ -863,7 +863,7 @@ export default function DashboardPage() {
                       </span>
                     </div>
 
-                    <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1 flex-1">
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1.5 custom-scrollbar flex-1">
                       {(currentTranscript?.segments || []).length > 0 ? (
                         (currentTranscript?.segments || []).map((seg: TranscriptSegmentItem, idx: number) => (
                           <div
@@ -1084,7 +1084,7 @@ export default function DashboardPage() {
                   </div>
 
                   {/* Scrollable Coaching Flags & Underperformance Areas */}
-                  <div className="glass-card-frosted p-6 space-y-3 flex-1 flex flex-col justify-between">
+                  <div className="glass-card-frosted p-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-bold text-white flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4 text-amber-400" /> Coaching Flags &amp; Underperformance Areas
@@ -1094,7 +1094,7 @@ export default function DashboardPage() {
                       </span>
                     </div>
 
-                    <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1 flex-1">
+                    <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1.5 custom-scrollbar">
                       {(currentAnalysis?.insights || []).length > 0 ? (
                         [...(currentAnalysis?.insights || [])]
                           .sort((a, b) => ((a.type === 'improvement' || a.type === 'negative') ? -1 : (b.type === 'improvement' || b.type === 'negative') ? 1 : 0))
