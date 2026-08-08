@@ -131,11 +131,7 @@ Return ONLY this strict JSON:
     for (const modelName of candidateModels) {
       try {
         const model = genAI.getGenerativeModel({ model: modelName });
-        const generatePromise = model.generateContent(prompt);
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Model ${modelName} timed out (15s limit)`)), 15000)
-        );
-        const result = await Promise.race([generatePromise, timeoutPromise]);
+        const result = await model.generateContent(prompt);
         responseText = result.response.text();
         if (responseText) {
           console.log(`[Virpo AI Engine] Analysis generated via: ${modelName}`);
@@ -143,7 +139,7 @@ Return ONLY this strict JSON:
         }
       } catch (mErr) {
         lastErr = mErr;
-        console.warn(`[Virpo AI Engine] Candidate ${modelName} unavailable/timed out, trying next...`);
+        console.warn(`[Virpo AI Engine] Candidate ${modelName} error, trying next...`);
       }
     }
 

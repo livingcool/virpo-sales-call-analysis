@@ -57,18 +57,13 @@ export async function transcribeWithSarvam(
     formData.append('language_code', languageCode);
     formData.append('with_timestamps', 'true');
 
-    const controller = new AbortController();
-    const fetchTimeout = setTimeout(() => controller.abort(), 20000);
-
     const response = await fetch(SARVAM_STT_ENDPOINT, {
       method: 'POST',
       headers: {
         'api-subscription-key': SARVAM_API_KEY,
       },
       body: formData,
-      signal: controller.signal,
     });
-    clearTimeout(fetchTimeout);
 
     if (response.ok) {
       const data = await response.json();
@@ -173,7 +168,7 @@ Return strict JSON format ONLY:
     try {
       console.log(`[Virpo Audio Engine] Sending ${audioBuffer.length} bytes to ${modelName} for multimodal audio STT...`);
       const model = genAI.getGenerativeModel({ model: modelName });
-      const generatePromise = model.generateContent([
+      const result = await model.generateContent([
         prompt,
         {
           inlineData: {
@@ -182,10 +177,6 @@ Return strict JSON format ONLY:
           },
         },
       ]);
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error(`Audio model ${modelName} timed out (35s limit)`)), 35000)
-      );
-      const result = await Promise.race([generatePromise, timeoutPromise]);
 
       const responseText = result.response.text();
       const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
