@@ -42,7 +42,7 @@ export async function analyzeCallWithGemini(
 
     const prompt = `
 You are the master AI Sales Coach for RootedAI, evaluating a sales call conducted in Tamil / Tanglish (code-switched Tamil-English) in India (${city}).
-Analyze this diarized transcript against our strict 0-100 rubric with negative marking penalty rules.
+Analyze this diarized transcript against our strict 0-100 rubric.
 
 CRITICAL INSTRUCTION:
 - For EVERY sub-score, provide a detailed "reason" (2-3 sentences) explaining exactly WHY that score was given, with a verbatim quote from the transcript proving your reason.
@@ -60,15 +60,6 @@ RUBRIC:
 4. Objection Handling (Max 20): Addressing price/doubts without talking over, empathy before rebuttal.
 5. Closing & Next Steps (Max 15): Clear call-to-action, confirmed follow-up time, commitment from prospect.
 6. Talk-Listen Balance (Max 10): Balanced talk ratio, not dominating.
-
-PENALTY DEDUCTION RULES:
-- Incorrect pricing quoted: -15 (Critical)
-- Pressure/manipulative tactics: -12 (Critical)
-- Rude or dismissive tone: -10 (Critical)
-- Interrupted customer: -5 (Moderate)
-- Missed required disclosure: -10 (Critical)
-- No clear closing ask: -6 (Moderate)
-- Weak needs discovery: -5 (Moderate)
 
 Return ONLY this strict JSON (no markdown, no explanation outside JSON):
 {
@@ -168,8 +159,8 @@ Return ONLY this strict JSON (no markdown, no explanation outside JSON):
       })
     );
 
-    const penalties: PenaltyDeduction[] = parsed.penalties || [];
-    const { overallScore, totalDeductions } = calculateOverallScore(subScores, penalties);
+    const penalties: PenaltyDeduction[] = [];
+    const { overallScore } = calculateOverallScore(subScores, penalties);
 
     const analysisId = crypto.randomUUID();
     const analysis: Analysis = {
@@ -180,7 +171,7 @@ Return ONLY this strict JSON (no markdown, no explanation outside JSON):
       sub_score_reasons: subScoreReasons,
       weak_areas: weakAreas,
       penalties,
-      total_deductions: totalDeductions,
+      total_deductions: 0,
       confidence_level: 96.5,
       summary_text: parsed.summary_text || `Executive engaged lead ${leadName} in ${city} using Tamil/Tanglish pitch.`,
       model_version: 'gemini-2.5-flash',

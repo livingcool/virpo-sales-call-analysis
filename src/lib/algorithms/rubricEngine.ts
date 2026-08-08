@@ -1,8 +1,12 @@
 import { CategorySubScores, PenaltyDeduction } from '../types';
 
+/**
+ * Calculates overall score purely from rubric sub-scores (0-100 max sum).
+ * Negative deduction marking has been removed as requested.
+ */
 export function calculateOverallScore(
   subScores: CategorySubScores,
-  penalties: PenaltyDeduction[]
+  _penalties?: PenaltyDeduction[]
 ): { overallScore: number; totalDeductions: number; weightedSum: number } {
   // Category sub-score weighted sum (Max 100)
   const weightedSum =
@@ -13,16 +17,13 @@ export function calculateOverallScore(
     (subScores.closing || 0) +
     (subScores.talk_listen || 0);
 
-  // Sum of penalty deductions
-  const totalDeductions = penalties.reduce((acc, p) => acc + (p.deduction || 0), 0);
-
-  // PRD Formula: overall_score = clamp(weighted_sum - sum(penalty_deductions), 0, 100)
-  const rawScore = weightedSum - totalDeductions;
-  const overallScore = Math.max(0, Math.min(100, Math.round(rawScore)));
+  // Negative marking removed — totalDeductions is always 0
+  const totalDeductions = 0;
+  const overallScore = Math.max(0, Math.min(100, Math.round(weightedSum)));
 
   return {
     overallScore,
-    totalDeductions,
+    totalDeductions: 0,
     weightedSum,
   };
 }
@@ -39,6 +40,6 @@ export function getScoreBand(score: number): {
   } else if (score >= 50) {
     return { band: 'coaching', label: 'Needs Coaching (C)', badgeClass: 'bg-amber-100 text-amber-800 border-amber-300' };
   } else {
-    return { band: 'critical', label: 'Critical Violation (D-)', badgeClass: 'bg-rose-100 text-rose-800 border-rose-300' };
+    return { band: 'critical', label: 'Critical Gap (D)', badgeClass: 'bg-rose-100 text-rose-800 border-rose-300' };
   }
 }

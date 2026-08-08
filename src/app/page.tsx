@@ -154,7 +154,7 @@ export default function DashboardPage() {
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (isProcessing) {
-      setCountdownSeconds(45);
+      setCountdownSeconds(90);
       timer = setInterval(() => {
         setCountdownSeconds((prev) => (prev > 1 ? prev - 1 : 1));
       }, 1000);
@@ -1031,8 +1031,8 @@ export default function DashboardPage() {
                           <span className="font-bold text-cyan-300">{selectedCall?.language || 'Tanglish'}</span>
                         </div>
                         <div>
-                          <span className="text-slate-400">Total Deductions:</span>{' '}
-                          <span className="font-bold text-rose-400">-{currentAnalysis?.total_deductions || 5} pts</span>
+                          <span className="text-slate-400">Scoring Method:</span>{' '}
+                          <span className="font-bold text-emerald-400">Rubric Competencies (0-100)</span>
                         </div>
                       </div>
                     </div>
