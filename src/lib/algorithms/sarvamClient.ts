@@ -40,13 +40,18 @@ export async function transcribeWithSarvam(
     formData.append('language_code', languageCode);
     formData.append('with_timestamps', 'true');
 
+    const controller = new AbortController();
+    const fetchTimeout = setTimeout(() => controller.abort(), 12000);
+
     const response = await fetch(SARVAM_STT_ENDPOINT, {
       method: 'POST',
       headers: {
         'api-subscription-key': SARVAM_API_KEY,
       },
       body: formData,
+      signal: controller.signal,
     });
+    clearTimeout(fetchTimeout);
 
     if (response.ok) {
       const data = await response.json();
@@ -163,7 +168,7 @@ Return strict JSON format ONLY:
   for (const modelName of candidateModels) {
     try {
       const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent([
+      const generatePromise = model.generateContent([
         prompt,
         {
           inlineData: {
@@ -172,6 +177,10 @@ Return strict JSON format ONLY:
           },
         },
       ]);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Audio model ${modelName} timed out (15s limit)`)), 15000)
+      );
+      const result = await Promise.race([generatePromise, timeoutPromise]);
 
       const responseText = result.response.text();
       const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();

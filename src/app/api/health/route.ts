@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer, isSupabaseLive } from '@/lib/supabaseServer';
+import { supabaseServer } from '@/lib/supabaseServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,20 +22,8 @@ export interface HealthResult {
 export async function GET() {
   const start = Date.now();
 
-  if (!isSupabaseLive()) {
-    return NextResponse.json<HealthResult>({
-      supabase: false,
-      storage: false,
-      project_ref: 'not configured',
-      latency_ms: 0,
-      error: 'NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY missing',
-    });
-  }
-
-  const projectRef =
-    (process.env.NEXT_PUBLIC_SUPABASE_URL || '')
-      .replace('https://', '')
-      .split('.')[0] || 'unknown';
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dnqxuxuhfugowutamvlk.supabase.co';
+  const projectRef = rawUrl.replace('https://', '').split('.')[0] || 'dnqxuxuhfugowutamvlk';
 
   let dbOk = false;
   let storageOk = false;
