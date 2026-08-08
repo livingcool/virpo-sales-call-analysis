@@ -899,89 +899,86 @@ export default function DashboardPage() {
                   </div>
 
                   {/* Executive Skill Mastery & Strength Analytics Charts */}
-                  <div className="glass-card-frosted p-6 space-y-4 flex-1">
+                  <div className="glass-card-frosted p-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-bold text-white flex items-center gap-2">
                         <Award className="w-4 h-4 text-emerald-400" /> Executive Skill Mastery &amp; Strongest Competencies
                       </h3>
                       <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                        Strongest Skill Areas
+                        Assessed Strong Points
                       </span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                      <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-white flex items-center gap-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Tamil &amp; Tanglish Pitch Comfort
-                          </span>
-                          <span className="font-mono text-emerald-400 font-bold">95% Mastery</span>
-                        </div>
-                        <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                          <div className="bg-gradient-to-r from-cyan-400 to-emerald-400 h-full rounded-full" style={{ width: '95%' }}></div>
-                        </div>
-                        <p className="text-[11px] text-slate-400">Fluently switched between regional Tamil terms and product English features.</p>
-                      </div>
+                      {(() => {
+                        const sub = currentAnalysis?.sub_scores;
+                        const maxMap: Record<string, { label: string; max: number; desc: string }> = {
+                          opening: { label: 'Warm Tamil Opening & Respect', max: 10, desc: 'Polite Tamil salutations and professional intro.' },
+                          discovery: { label: 'Buyer Need & Pain Discovery', max: 30, desc: 'Explored prospect budget limits, location needs, and timeline.' },
+                          pitch_clarity: { label: 'Real Estate Pitch & SqFt Clarity', max: 15, desc: 'Clear presentation of project highlights and amenities.' },
+                          objection_handling: { label: 'Objection Handling & RERA Defense', max: 20, desc: 'Positioned construction quality and approvals against price doubts.' },
+                          closing: { label: 'Site Visit & Token Commitment', max: 10, desc: 'Secured commitment for site visit slot or proposal review.' },
+                          talk_listen: { label: 'Speech Pacing & Active Listening', max: 15, desc: 'Maintained 2:1 listen ratio with calm, authoritative tonality.' },
+                        };
 
-                      <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-white flex items-center gap-1.5">
-                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Objection Handling &amp; Value Framing
-                          </span>
-                          <span className="font-mono text-emerald-400 font-bold">88% Mastery</span>
-                        </div>
-                        <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                          <div className="bg-gradient-to-r from-emerald-400 to-teal-400 h-full rounded-full" style={{ width: '88%' }}></div>
-                        </div>
-                        <p className="text-[11px] text-slate-400">Positioned quality guarantees and construction durability against price doubts.</p>
-                      </div>
+                        let items: { title: string; pct: number; desc: string }[] = [];
+                        if (sub) {
+                          const subRecord = sub as Record<string, number>;
+                          const reasonsRecord = (currentAnalysis?.sub_score_reasons || {}) as Record<string, { reason?: string }>;
+                          items = Object.entries(maxMap).map(([key, info]) => {
+                            const raw = subRecord[key] ?? 0;
+                            const pct = Math.min(100, Math.round((raw / info.max) * 100));
+                            const reasonObj = reasonsRecord[key];
+                            return { title: info.label, pct, desc: reasonObj?.reason || info.desc };
+                          }).sort((a, b) => b.pct - a.pct).slice(0, 4);
+                        } else {
+                          items = [
+                            { title: 'Real Estate Pitch & Tanglish Comfort', pct: 92, desc: 'Fluently switched between Tamil property details and construction specs.' },
+                            { title: 'Objection Handling & Price Framing', pct: 88, desc: 'Positioned construction quality and DTCP approval against price concerns.' },
+                            { title: 'Warm Tamil Opening & Customer Respect', pct: 90, desc: 'Used respectful Tamil salutations and set professional meeting agenda.' },
+                            { title: 'Speech Rate & Tanglish Clarity', pct: 85, desc: 'Clear pacing with zero awkward pauses during plot/villa breakdown.' },
+                          ];
+                        }
 
-                      <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-white flex items-center gap-1.5">
-                            <HeartHandshake className="w-3.5 h-3.5 text-amber-400" /> Warm Opening &amp; Customer Respect
-                          </span>
-                          <span className="font-mono text-emerald-400 font-bold">90% Mastery</span>
-                        </div>
-                        <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                          <div className="bg-gradient-to-r from-amber-400 to-emerald-400 h-full rounded-full" style={{ width: '90%' }}></div>
-                        </div>
-                        <p className="text-[11px] text-slate-400">Used polite Tamil salutations and maintained respectful customer engagement.</p>
-                      </div>
-
-                      <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-white flex items-center gap-1.5">
-                            <Mic className="w-3.5 h-3.5 text-purple-400" /> Speech Rate &amp; Tanglish Clarity
-                          </span>
-                          <span className="font-mono text-emerald-400 font-bold">92% Mastery</span>
-                        </div>
-                        <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                          <div className="bg-gradient-to-r from-purple-400 to-emerald-400 h-full rounded-full" style={{ width: '92%' }}></div>
-                        </div>
-                        <p className="text-[11px] text-slate-400">Clear pacing with zero awkward pauses during product explanation.</p>
-                      </div>
+                        return items.map((item, idx) => {
+                          const barColor = item.pct >= 80 ? 'from-emerald-400 to-teal-400' : item.pct >= 60 ? 'from-amber-400 to-emerald-400' : 'from-rose-500 to-amber-500';
+                          return (
+                            <div key={idx} className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-white flex items-center gap-1.5">
+                                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> {item.title}
+                                </span>
+                                <span className="font-mono text-emerald-400 font-bold">{item.pct}% Mastery</span>
+                              </div>
+                              <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                                <div className={`bg-gradient-to-r ${barColor} h-full rounded-full`} style={{ width: `${item.pct}%` }}></div>
+                              </div>
+                              <p className="text-[11px] text-slate-300 leading-relaxed">{item.desc}</p>
+                            </div>
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
 
-                  {/* Weakest Areas Chart */}
-                  <div className="glass-card-frosted p-6 space-y-4 flex-1">
+                  {/* Scrollable Weakest Areas & Critical Gaps Chart */}
+                  <div className="glass-card-frosted p-6 space-y-4 flex-1 flex flex-col">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-bold text-white flex items-center gap-2">
                         <TrendingDown className="w-4 h-4 text-rose-400" /> Weakest Areas &amp; Critical Gaps
                       </h3>
                       <span className="text-[11px] font-bold text-rose-400 bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/20">
-                        Needs Coaching
+                        Scrollable (Needs Coaching)
                       </span>
                     </div>
 
-                    <div className="space-y-3 pt-1">
+                    <div className="space-y-3 pt-1 max-h-[380px] overflow-y-auto pr-1.5 custom-scrollbar flex-1">
                       {(currentAnalysis?.weak_areas && currentAnalysis.weak_areas.length > 0
                         ? currentAnalysis.weak_areas
                         : [
-                            { label: 'Needs Discovery', pct: 55, reason: 'No qualifying questions asked before pitching.', quote: 'நம்ம கட்டடம் ரொம்ப தரமானது சார்...', timestamp: '01:10' },
-                            { label: 'Closing & Next Steps', pct: 60, reason: 'No firm follow-up date or commitment secured.', quote: 'சரி பாக்கலாம் சார்...', timestamp: '03:50' },
-                            { label: 'Objection Handling', pct: 60, reason: 'Interrupted customer; no empathy before rebuttal.', quote: 'இல்லை சார், ரேட் ரீசனபிள் தான்...', timestamp: '01:45' },
+                            { label: 'Site Visit Slot Booking', pct: 55, reason: 'No qualifying questions or firm site visit date asked before pitching.', quote: 'நம்ம கட்டடம் ரொம்ப தரமானது சார்...', timestamp: '01:10' },
+                            { label: 'Closing & Next Steps Commitment', pct: 60, reason: 'No firm follow-up date or token advance commitment secured.', quote: 'சரி பாக்கலாம் சார்...', timestamp: '03:50' },
+                            { label: 'Objection Handling & SqFt Rate', pct: 60, reason: 'Interrupted customer during price per sqft query; no empathy before rebuttal.', quote: 'இல்லை சார், ரேட் ரீசனபிள் தான்...', timestamp: '01:45' },
                           ]
                       ).map((area: WeakAreaItem, idx: number) => (
                         <div key={idx} className="p-3.5 rounded-2xl bg-rose-950/20 border border-rose-500/20 space-y-2">
@@ -1094,18 +1091,18 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  {/* Scrollable Coaching Flags & Underperformance Areas */}
-                  <div className="glass-card-frosted p-6 space-y-4">
+                  {/* Scrollable Coaching Flags & Underperformance Areas (Highlighted & Height Matched) */}
+                  <div className="relative rounded-3xl p-6 space-y-4 border-2 border-rose-500/70 shadow-[0_0_30px_rgba(244,63,94,0.35)] bg-gradient-to-b from-rose-950/50 via-slate-900/95 to-slate-950/95 backdrop-blur-xl flex-1 flex flex-col transition-all duration-300 hover:shadow-[0_0_40px_rgba(244,63,94,0.5)]">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-amber-400" /> Coaching Flags &amp; Underperformance Areas
+                      <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-rose-400 animate-bounce" /> Coaching Flags &amp; Underperformance Areas
                       </h3>
-                      <span className="text-[10px] font-bold text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20">
-                        Scrollable (Critical First)
+                      <span className="text-[10px] font-extrabold text-rose-300 bg-rose-500/20 px-3 py-1 rounded-full border border-rose-500/40 shadow-[0_0_12px_rgba(244,63,94,0.4)] animate-pulse tracking-wide uppercase">
+                        🔥 Critical Priority • Scrollable
                       </span>
                     </div>
 
-                    <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1.5 custom-scrollbar">
+                    <div className="space-y-3 flex-1 overflow-y-auto pr-1.5 custom-scrollbar min-h-[300px] max-h-[460px]">
                       {(currentAnalysis?.insights || []).length > 0 ? (
                         [...(currentAnalysis?.insights || [])]
                           .sort((a, b) => ((a.type === 'improvement' || a.type === 'negative') ? -1 : (b.type === 'improvement' || b.type === 'negative') ? 1 : 0))

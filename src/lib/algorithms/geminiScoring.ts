@@ -53,21 +53,23 @@ export async function analyzeCallWithGemini(
 
     // Token-optimized 100-Point CLOSER Rubric + Hidden Value + 5-Part Negative Breakdown Prompt
     const prompt = `
-Role: Master AI Sales Coach & Call Auditor. Evaluate Tamil/Tanglish call in ${city} for prospect ${leadName}.
-Grade against 100-Point CLOSER Rubric.
+Role: Master AI Real Estate Sales Coach & Property Call Auditor. Evaluate Tamil/Tanglish Real Estate sales call in ${city} for prospect ${leadName}.
+Industry Domain: Indian & Tamil Nadu Real Estate (Villas, Apartments, Plots, Construction Quality, Site Visit Slot Booking, SqFt Rates, DTCP/RERA approvals, Home Loans, Token Advance Closing).
 
 CRITICAL AUDIT RULES:
-1. SUMMARY_TEXT: Make summary_text ultra-brief (1-2 sentences max). Explicitly answer: WHAT went wrong in this call and WHY it went wrong.
-2. EXHAUSTIVE CRITICAL NEGATIVES: Do NOT stop at 1 or 2 items! Audit every sentence of the call and list AT LEAST 4 to 8 exhaustive underperformance flags covering every weak line, price hesitation, soft ask, missed pain trigger, or unverified commitment.
-3. FOR EVERY SINGLE UNDERPERFORMANCE FLAG (in the "negatives" array), PROVIDE THIS 5-PART BREAKDOWN:
-   - title: Short descriptive flag title.
+1. REAL ESTATE DOMAIN FOCUS: Perform evaluation specifically tailored to Real Estate sales (site visits, plot/villa walkthroughs, price per sqft, RERA/DTCP approvals, token advance, home loan assistance).
+2. SUMMARY_TEXT: Make summary_text ultra-brief (1-2 sentences max). Explicitly answer: WHAT went wrong in this property call and WHY it went wrong.
+3. EXHAUSTIVE CRITICAL NEGATIVES: Do NOT limit or skip any underperformance areas! Vent out EVERY SINGLE negative flag, mistake, hesitation, weak statement, soft close, or missed site-visit/token commitment in the transcript (minimum 4 to 8 items).
+4. FOR EVERY SINGLE UNDERPERFORMANCE FLAG (in the "negatives" array), PROVIDE THIS 5-PART BREAKDOWN:
+   - title: Short descriptive flag title (e.g., "Missed Site Visit Commitment", "Unjustified Price Per SqFt").
    - what_was_wrong: Exact weak line or mistake made by executive.
-   - why_was_wrong: Psychological or sales reason why this hurt buyer trust or closing momentum.
-   - how_to_say_instead: Exact high-converting Tamil/Tanglish alternative phrasing executive SHOULD have used.
-   - why_say_that: Tactical reason why this recommended phrasing works better.
+   - why_was_wrong: Real estate buyer psychology reason why this hurt buyer trust or site visit momentum.
+   - how_to_say_instead: Exact high-converting Tamil/Tanglish property pitch phrasing executive SHOULD have used.
+   - why_say_that: Tactical reason why this recommended real estate phrasing works better.
    - expected_impact: High-converting sales impact of using recommended phrasing.
    - quote: Verbatim line from transcript.
    - timestamp: "MM:SS"
+5. REAL ESTATE STRENGTHS (positives array): Identify genuine strong property pitch points, polite Tamil salutations, clear sqft rate breakdown, or confident RERA/DTCP handling.
 
 RUBRIC (100 Pts):
 1. prep (10): Research & contextual note-taking.
