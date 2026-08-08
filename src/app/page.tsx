@@ -126,7 +126,7 @@ export default function DashboardPage() {
     return () => clearInterval(timer);
   }, [isProcessing]);
 
-  const logOutput = '[Supabase Client] Connected to https://dnqxuxhfugowutamvlk.supabase.co\n[DB Status] Target Database Live Verified.';
+  const logOutput = '[Supabase Client] Connected to https://dnqxuxuhfugowutamvlk.supabase.co\n[DB Status] Target Database Live Verified.';
 
   const handleTabChange = (tab: 'triage' | 'deepdive' | 'pipeline' | 'settings') => {
     setActiveTab(tab);
@@ -303,9 +303,18 @@ export default function DashboardPage() {
 
       setPipelineStep(3);
 
-      const data = await res.json();
+      // Safe JSON parse — handle Vercel 413/500 plain-text responses
+      let data: Record<string, unknown> = {};
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error(`Server error ${res.status}: ${text.slice(0, 120)}`);
+      }
+
       if (data.success && data.call) {
-        const newCall = data.call;
+        const newCall = data.call as CallItem;
         setCalls((prev) => [newCall, ...prev.filter((c) => c.id !== newCall.id)]);
         setSelectedCall(newCall);
         handleTabChange('deepdive');
@@ -330,9 +339,15 @@ export default function DashboardPage() {
       return;
     }
 
+    // Guard: Vercel serverless limit is ~4.5 MB
+    const MAX_MB = 4;
+    if (uploadFile.size > MAX_MB * 1024 * 1024) {
+      alert(`File too large for Vercel serverless (${(uploadFile.size / 1024 / 1024).toFixed(1)} MB).\nMax allowed: ${MAX_MB} MB.\nTip: Compress the audio to MP3 128kbps or trim it under ${MAX_MB} MB before uploading.`);
+      return;
+    }
+
     setIsProcessing(true);
     setPipelineStep(1);
-
     setTimeout(() => setPipelineStep(2), 1200);
 
     try {
@@ -350,15 +365,27 @@ export default function DashboardPage() {
 
       setPipelineStep(3);
 
-      const data = await res.json();
+      // Safe JSON parse — Vercel may return plain-text 413/500 before our handler runs
+      let data: Record<string, unknown> = {};
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        if (res.status === 413) {
+          throw new Error(`File too large — Vercel rejected the upload (413). Please compress your audio below 4 MB.`);
+        }
+        throw new Error(`Server error ${res.status}: ${text.slice(0, 120)}`);
+      }
+
       if (data.success && data.call) {
-        const newCall = data.call;
+        const newCall = data.call as CallItem;
         setCalls((prev) => [newCall, ...prev.filter((c) => c.id !== newCall.id)]);
         setSelectedCall(newCall);
         handleTabChange('deepdive');
         fetchCalls();
       } else {
-        alert('Ingestion Note: ' + (data.error || 'Check console'));
+        alert('Ingestion Note: ' + (data.error || 'Check server console'));
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Upload failed';
