@@ -28,7 +28,7 @@ export async function GET() {
       storage: false,
       project_ref: 'not configured',
       latency_ms: 0,
-      error: 'NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing',
+      error: 'NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY missing',
     });
   }
 
@@ -52,7 +52,13 @@ export async function GET() {
     if (!error) {
       dbOk = true;
     } else {
-      dbError = error.message;
+      if (error.message.includes('permission denied') || error.code === '42501') {
+        dbError = 'Schema tables missing permissions. Run supabase_schema.sql in Supabase SQL Editor.';
+      } else if (error.message.includes('relation "public.calls" does not exist') || error.code === '42P01') {
+        dbError = 'Calls table missing. Run supabase_schema.sql in Supabase SQL Editor.';
+      } else {
+        dbError = error.message;
+      }
     }
   } catch (e) {
     dbError = e instanceof Error ? e.message : 'DB probe failed';
