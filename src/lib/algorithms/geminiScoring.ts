@@ -202,7 +202,7 @@ Return ONLY this strict JSON:
       total_deductions: 0,
       confidence_level: 97.5,
       summary_text: parsed.summary_text || `Executive completed sales call with lead ${leadName} in ${city}. Graded against 100-point CLOSER framework.`,
-      model_version: 'gemini-2.5-flash',
+      model_version: 'virpo-ai-engine',
       rubric_version: 'v2.0-closer-100pt-optimized',
     };
 
@@ -345,7 +345,7 @@ Return ONLY this strict JSON:
       total_deductions: 0,
       confidence_level: 97.5,
       summary_text: `100-point CLOSER rubric evaluation for ${leadName} in ${city}. Graded 70/100. Key gaps in Clarify & Label discovery and Closing commitment. High-impact Tamil rephrasing and hidden value opportunities extracted.`,
-      model_version: 'gemini-2.5-flash',
+      model_version: 'virpo-ai-engine',
       rubric_version: 'v2.0-closer-100pt-optimized',
     };
 

@@ -255,8 +255,8 @@ function generateResilientTamilDiarization(fileSizeBytes: number): {
     {
       speaker: 'Agent',
       start_time: '00:30',
-      text: 'நிச்சயமாக சார்! நம்ம Sarvam AI STT & Gemini 2.5 Flash model மூலமா Real-Time Tamil Call Analytics தரும்.',
-      eng_switched: 'Sarvam AI STT Gemini 2.5 Flash Real-Time Tamil Call Analytics',
+      text: 'நிச்சயமாக சார்! நம்ம Virpo AI Engine மூலமா Real-Time Tamil Call Analytics தரும்.',
+      eng_switched: 'Virpo AI Engine Real-Time Tamil Call Analytics',
       confidence: 0.97,
     },
     {

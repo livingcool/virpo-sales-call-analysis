@@ -678,7 +678,7 @@ export default function DashboardPage() {
               <div className="space-y-1">
                 <h4 className="text-base font-bold text-white">No Call Recordings Found in Supabase</h4>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                  Run the live Sarvam AI &amp; Gemini pipeline to generate real call scoring &amp; coaching records in your database.
+                  Run the live Virpo AI pipeline to generate real call scoring &amp; coaching records in your database.
                 </p>
               </div>
 
@@ -1219,7 +1219,7 @@ export default function DashboardPage() {
           <div className="p-4 bg-white/5 border border-white/15 rounded-2xl flex items-center justify-between">
             <div>
               <h4 className="text-xs font-bold text-white">Fast Ingestion Pipeline</h4>
-              <p className="text-[11px] text-slate-400">Trigger live Sarvam STT &amp; Gemini scoring instantly</p>
+              <p className="text-[11px] text-slate-400">Trigger live Virpo AI scoring instantly</p>
             </div>
             <button
               type="button"
@@ -1334,7 +1334,7 @@ export default function DashboardPage() {
               {isProcessing && uploadProgress > 0 && uploadProgress < 100
                 ? `Uploading to Supabase... ${uploadProgress}%`
                 : isProcessing
-                ? 'Running Sarvam & Gemini Pipeline...'
+                ? 'Running Virpo AI Pipeline...'
                 : 'Start Audio Pipeline Analysis'}
             </button>
           </form>
@@ -1479,7 +1479,7 @@ CREATE TABLE IF NOT EXISTS public.manager_overrides (id UUID PRIMARY KEY, analys
                 <span>☕</span> Grab a coffee &amp; come back in a bit!
               </h3>
               <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
-                Sarvam AI Tamil STT &amp; Gemini 2.5 Flash are deep-analyzing your audio recording, transcribing speaker turns, evaluating rubric scores, and extracting underperformance flags...
+                Virpo AI is deep-analyzing your audio recording, transcribing speaker turns, evaluating rubric scores, and extracting underperformance flags...
               </p>
             </div>
 
@@ -1497,7 +1497,7 @@ CREATE TABLE IF NOT EXISTS public.manager_overrides (id UUID PRIMARY KEY, analys
               <div className="h-8 w-px bg-white/10"></div>
               <div className="text-left space-y-0.5">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AI ENGINES ACTIVE</p>
-                <p className="text-xs font-bold text-cyan-300">Sarvam saaras:v3 + Gemini 2.5</p>
+                <p className="text-xs font-bold text-cyan-300">Virpo AI Engine</p>
               </div>
             </div>
 
@@ -1513,7 +1513,7 @@ CREATE TABLE IF NOT EXISTS public.manager_overrides (id UUID PRIMARY KEY, analys
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span className={`flex items-center gap-2 ${pipelineStep >= 2 ? 'text-white' : 'text-slate-500'}`}>
                   <div className={`w-2 h-2 rounded-full ${pipelineStep >= 2 ? 'bg-cyan-400 animate-ping' : 'bg-slate-600'}`}></div>
-                  2. Sarvam saaras:v3 &amp; Gemini 2.5 STT / Diarization
+                  2. Virpo AI STT / Diarization Engine
                 </span>
                 <span className="text-[10px] text-cyan-400 font-mono">{pipelineStep >= 2 ? 'ACTIVE' : 'WAITING'}</span>
               </div>
