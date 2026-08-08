@@ -27,12 +27,14 @@ export async function POST(req: NextRequest) {
     let language: 'Tamil' | 'Tanglish' | 'English' = 'Tanglish';
     let contentType = 'audio/wav';
     let audioUrl = '';
+    let uploadedStoragePath: string | null = null;
 
     // ── Mode A: JSON body with storage_path ──────────────────────────────────
     const ct = req.headers.get('content-type') || '';
     if (ct.includes('application/json')) {
       const body = await req.json();
       const storagePath: string = body.storage_path;
+      uploadedStoragePath = storagePath;
       leadName   = body.leadName   || leadName;
       city       = body.city       || city;
       execName   = body.execName   || execName;
@@ -275,6 +277,16 @@ export async function POST(req: NextRequest) {
     };
 
     callsStore.addCall(ingestedCall);
+
+    // Auto-cleanup audio file from Supabase Storage after transcription & scoring complete
+    if (uploadedStoragePath) {
+      try {
+        await supabaseServer.storage.from('call-recordings').remove([uploadedStoragePath]);
+        console.log(`[Storage Auto-Cleanup] Successfully deleted audio file from storage: ${uploadedStoragePath}`);
+      } catch (cleanErr) {
+        console.warn('[Storage Auto-Cleanup Notice]:', cleanErr);
+      }
+    }
 
     return NextResponse.json({ success: true, callId, call: ingestedCall });
   } catch (error: unknown) {
