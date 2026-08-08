@@ -117,6 +117,40 @@ export default function DashboardPage() {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [countdownSeconds, setCountdownSeconds] = useState<number>(45);
 
+  // Live Supabase Health & Credentials Test State
+  const [healthInfo, setHealthInfo] = useState<{
+    supabase: boolean;
+    storage: boolean;
+    project_ref: string;
+    latency_ms: number;
+    error?: string;
+    storage_error?: string;
+  } | null>(null);
+  const [healthTesting, setHealthTesting] = useState<boolean>(false);
+
+  const checkSupabaseHealth = async () => {
+    setHealthTesting(true);
+    try {
+      const res = await fetch('/api/health');
+      const data = await res.json();
+      setHealthInfo(data);
+    } catch (err) {
+      setHealthInfo({
+        supabase: false,
+        storage: false,
+        project_ref: 'error',
+        latency_ms: 0,
+        error: err instanceof Error ? err.message : 'Health check failed',
+      });
+    } finally {
+      setHealthTesting(false);
+    }
+  };
+
+  useEffect(() => {
+    checkSupabaseHealth();
+  }, []);
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (isProcessing) {
@@ -333,7 +367,7 @@ export default function DashboardPage() {
     }
   };
 
-  // Upload Form Submission Handler — uses direct Supabase Storage upload (no size limit)
+  // Upload Form Submission Handler — Bulletproof 3-tier upload: Signed URL -> Client Storage -> Server Ingest Fallback
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadFile) {
@@ -342,54 +376,112 @@ export default function DashboardPage() {
     }
 
     setIsProcessing(true);
-    setUploadProgress(0);
+    setUploadProgress(10);
     setPipelineStep(1);
 
+    let storagePathUploaded: string | null = null;
+
+    // ── Tier 1 & 2: Direct Supabase Storage Upload via Presigned URL ─────────
     try {
-      // ── Step 1: Ensure 'call-recordings' bucket exists ──────────────────────
-      await fetch('/api/presign', { method: 'POST' });
-
-      // ── Step 2: Upload directly to Supabase Storage (browser → Supabase) ───
-      // This completely bypasses Vercel — supports files up to 100 MB
-      const storagePath = `${Date.now()}_${uploadFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-
-      // Simulate upload progress (Supabase JS client doesn't expose progress natively)
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => (prev < 85 ? prev + 5 : prev));
-      }, 400);
-
-      const { error: storageErr } = await supabase.storage
-        .from('call-recordings')
-        .upload(storagePath, uploadFile, {
-          contentType: uploadFile.type || 'audio/mpeg',
-          upsert: true,
-        });
-
-      clearInterval(progressInterval);
-
-      if (storageErr) {
-        throw new Error(`Storage upload failed: ${storageErr.message}`);
-      }
-
-      setUploadProgress(100);
-      setPipelineStep(2);
-
-      // ── Step 3: Tell server the storage path — server fetches & processes ───
-      setTimeout(() => setPipelineStep(3), 800);
-
-      const res = await fetch('/api/ingest', {
+      const presignRes = await fetch('/api/presign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storage_path: storagePath, leadName, city, execName, language }),
+        body: JSON.stringify({ filename: uploadFile.name }),
       });
+      const presignData = await presignRes.json();
 
-      // Safe JSON parse — handle unexpected server errors
+      if (presignData.ok && presignData.storagePath) {
+        const path = presignData.storagePath;
+
+        // Progress simulator
+        const progressInterval = setInterval(() => {
+          setUploadProgress((prev) => (prev < 85 ? prev + 5 : prev));
+        }, 300);
+
+        let uploadSuccess = false;
+
+        // Attempt 1: Upload via Presigned Signed URL (no client env vars required)
+        if (presignData.signedUrl) {
+          try {
+            const putRes = await fetch(presignData.signedUrl, {
+              method: 'PUT',
+              headers: { 'Content-Type': uploadFile.type || 'audio/mpeg' },
+              body: uploadFile,
+            });
+            if (putRes.ok) {
+              uploadSuccess = true;
+              storagePathUploaded = path;
+            }
+          } catch (putErr) {
+            console.warn('[Storage Signed URL Upload Notice]:', putErr);
+          }
+        }
+
+        // Attempt 2: Client Supabase SDK Upload
+        if (!uploadSuccess && presignData.supabaseUrl && !presignData.supabaseUrl.includes('placeholder')) {
+          try {
+            const { error: storageErr } = await supabase.storage
+              .from('call-recordings')
+              .upload(path, uploadFile, {
+                contentType: uploadFile.type || 'audio/mpeg',
+                upsert: true,
+              });
+            if (!storageErr) {
+              uploadSuccess = true;
+              storagePathUploaded = path;
+            }
+          } catch (sdkErr) {
+            console.warn('[Storage Client SDK Upload Notice]:', sdkErr);
+          }
+        }
+
+        clearInterval(progressInterval);
+      }
+    } catch (presignErr) {
+      console.warn('[Presign Notice]: Direct storage upload bypassed, switching to server fallback:', presignErr);
+    }
+
+    setUploadProgress(100);
+    setPipelineStep(2);
+    setTimeout(() => setPipelineStep(3), 600);
+
+    // ── Tier 3: Ingest Request (Storage Path OR Server FormData Fallback) ──────
+    try {
+      let res: Response;
+
+      if (storagePathUploaded) {
+        // Fast JSON payload referencing stored audio
+        res = await fetch('/api/ingest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ storage_path: storagePathUploaded, leadName, city, execName, language }),
+        });
+      } else {
+        // Fallback: Direct FormData upload to server endpoint
+        console.info('[Ingestion] Direct storage upload unavailable/bypassed — using server ingest fallback.');
+        const formData = new FormData();
+        formData.append('file', uploadFile);
+        formData.append('leadName', leadName);
+        formData.append('city', city);
+        formData.append('execName', execName);
+        formData.append('language', language);
+
+        res = await fetch('/api/ingest', {
+          method: 'POST',
+          body: formData,
+        });
+      }
+
+      // Safe JSON parse — handle Vercel 413 or text errors gracefully
       let data: Record<string, unknown> = {};
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('application/json')) {
         data = await res.json();
       } else {
         const text = await res.text();
+        if (res.status === 413) {
+          throw new Error('File exceeds Vercel 4.5 MB serverless limit. Please compress audio or try again.');
+        }
         throw new Error(`Server error ${res.status}: ${text.slice(0, 120)}`);
       }
 
@@ -400,7 +492,7 @@ export default function DashboardPage() {
         handleTabChange('deepdive');
         fetchCalls();
       } else {
-        alert('Ingestion Note: ' + (data.error || 'Check server console'));
+        alert('Ingestion Note: ' + (data.error || 'Check server logs'));
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Upload failed';
@@ -1075,14 +1167,53 @@ export default function DashboardPage() {
                 Files upload directly to Supabase Storage — <span className="text-emerald-400 font-bold">no file size limit</span>. Supports MP3, WAV, M4A, MP4.
               </p>
             </div>
-            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
-              process.env.NEXT_PUBLIC_SUPABASE_URL
-                ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20'
-                : 'text-rose-300 bg-rose-500/10 border-rose-500/20'
-            }`}>
-              {process.env.NEXT_PUBLIC_SUPABASE_URL ? '● Supabase Live' : '○ Local Only'}
-            </span>
+            <button
+              type="button"
+              onClick={checkSupabaseHealth}
+              disabled={healthTesting}
+              className={`text-[10px] font-bold px-3 py-1 rounded-full border transition-all cursor-pointer flex items-center gap-1.5 ${
+                healthInfo?.supabase && healthInfo?.storage
+                  ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20'
+                  : healthInfo?.supabase
+                  ? 'text-amber-300 bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20'
+                  : 'text-rose-300 bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20'
+              }`}
+            >
+              {healthTesting ? 'Testing Credentials...' : healthInfo?.supabase ? `● Supabase Verified (${healthInfo.latency_ms}ms)` : '✕ Supabase Connection Failed'}
+            </button>
           </div>
+
+          {/* Live Supabase Connection Test Status Alert */}
+          {healthInfo && (
+            <div className={`p-4 rounded-2xl border text-xs space-y-2 ${
+              healthInfo.supabase && healthInfo.storage
+                ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200'
+                : healthInfo.supabase
+                ? 'bg-amber-950/20 border-amber-500/30 text-amber-200'
+                : 'bg-rose-950/20 border-rose-500/30 text-rose-200'
+            }`}>
+              <div className="flex items-center justify-between font-bold">
+                <span className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4" />
+                  Supabase Project: <code className="font-mono bg-black/40 px-2 py-0.5 rounded text-white">{healthInfo.project_ref}</code>
+                </span>
+                <span className="font-mono text-[11px]">{healthInfo.latency_ms}ms latency</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1 font-semibold text-[11px]">
+                <div className="flex items-center gap-1.5">
+                  <span className={`w-2 h-2 rounded-full ${healthInfo.supabase ? 'bg-emerald-400' : 'bg-rose-500'}`} />
+                  Database Query: {healthInfo.supabase ? 'Connected & Verified' : 'Failed'}
+                  {healthInfo.error && <span className="text-rose-400 block text-[10px]">({healthInfo.error})</span>}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className={`w-2 h-2 rounded-full ${healthInfo.storage ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                  Storage Bucket: {healthInfo.storage ? 'Ready (call-recordings)' : 'Notice / Restricted'}
+                  {healthInfo.storage_error && <span className="text-amber-400 block text-[10px]">({healthInfo.storage_error})</span>}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="p-4 bg-white/5 border border-white/15 rounded-2xl flex items-center justify-between">
             <div>
@@ -1221,9 +1352,15 @@ export default function DashboardPage() {
                 Target Project Ref: <code>{process.env.NEXT_PUBLIC_SUPABASE_URL ? process.env.NEXT_PUBLIC_SUPABASE_URL.split('.')[0].replace('https://', '') : 'Configured via .env.local'}</code>
               </p>
             </div>
-            <span className="px-3 py-1 bg-white/10 text-slate-300 text-[11px] font-bold rounded-full border border-white/20">
-              Verified 200 OK
-            </span>
+            <button
+              type="button"
+              onClick={checkSupabaseHealth}
+              disabled={healthTesting}
+              className="px-3.5 py-1.5 bg-white/10 text-white text-xs font-bold rounded-full border border-white/20 hover:bg-white/20 transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              {healthTesting ? 'Testing Connection...' : 'Re-test Credentials'}
+            </button>
           </div>
 
           <div className="space-y-4 text-xs font-semibold text-slate-300">
