@@ -32,6 +32,11 @@ interface InsightItem {
   type: 'positive' | 'negative' | 'improvement';
   title: string;
   text: string;
+  what_was_wrong?: string;
+  why_was_wrong?: string;
+  how_to_say_instead?: string;
+  why_say_that?: string;
+  expected_impact?: string;
   quote?: string;
   timestamp_ref?: string;
 }
@@ -1099,38 +1104,76 @@ export default function DashboardPage() {
                       {(currentAnalysis?.insights || []).length > 0 ? (
                         [...(currentAnalysis?.insights || [])]
                           .sort((a, b) => ((a.type === 'improvement' || a.type === 'negative') ? -1 : (b.type === 'improvement' || b.type === 'negative') ? 1 : 0))
-                          .map((ins: InsightItem, i: number) => {
+                          .map((ins: any, i: number) => {
                             const isNegative = ins.type === 'improvement' || ins.type === 'negative';
                             return (
-                              <div
-                                key={i}
-                                className={`p-3.5 rounded-2xl text-xs space-y-1.5 ${
-                                  isNegative
-                                    ? 'bg-rose-950/30 border border-rose-500/30 text-slate-200'
-                                    : 'bg-emerald-950/20 border border-emerald-500/20 text-slate-200'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between font-bold text-white">
-                                  <span className="flex items-center gap-1.5">
-                                    {isNegative ? (
-                                      <TrendingDown className="w-4 h-4 text-rose-400" />
-                                    ) : (
-                                      <ThumbsUp className="w-4 h-4 text-emerald-400" />
-                                    )}
-                                    <span className={isNegative ? 'text-rose-200 font-bold' : 'text-emerald-200 font-bold'}>
-                                      {ins.title}
+                                <div
+                                  key={i}
+                                  className={`p-4 rounded-2xl text-xs space-y-2.5 ${
+                                    isNegative
+                                      ? 'bg-rose-950/30 border border-rose-500/30 text-slate-200 shadow-md'
+                                      : 'bg-emerald-950/20 border border-emerald-500/20 text-slate-200'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between font-bold text-white border-b border-white/10 pb-2">
+                                    <span className="flex items-center gap-1.5 text-sm">
+                                      {isNegative ? (
+                                        <TrendingDown className="w-4 h-4 text-rose-400 shrink-0" />
+                                      ) : (
+                                        <ThumbsUp className="w-4 h-4 text-emerald-400 shrink-0" />
+                                      )}
+                                      <span className={isNegative ? 'text-rose-200 font-bold' : 'text-emerald-200 font-bold'}>
+                                        {ins.title}
+                                      </span>
                                     </span>
-                                  </span>
-                                  <span className="text-[10px] text-slate-400 font-mono">{ins.timestamp_ref}</span>
+                                    <span className="text-[10px] text-slate-400 font-mono bg-black/40 px-2 py-0.5 rounded">{ins.timestamp_ref}</span>
+                                  </div>
+
+                                  {ins.text && <p className="text-slate-300 leading-relaxed text-xs">{ins.text}</p>}
+
+                                  {/* 5-Part Coaching Breakdown for Underperformance Flags */}
+                                  {isNegative && (
+                                    <div className="space-y-2 text-[11px] pt-1">
+                                      {ins.what_was_wrong && (
+                                        <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-200 leading-relaxed">
+                                          <span className="font-bold text-rose-300 block mb-0.5">❌ What was wrong:</span>
+                                          {ins.what_was_wrong}
+                                        </div>
+                                      )}
+                                      {ins.why_was_wrong && (
+                                        <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 leading-relaxed">
+                                          <span className="font-bold text-amber-300 block mb-0.5">❓ Why it was wrong:</span>
+                                          {ins.why_was_wrong}
+                                        </div>
+                                      )}
+                                      {ins.how_to_say_instead && (
+                                        <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-200 leading-relaxed">
+                                          <span className="font-bold text-emerald-300 block mb-0.5">💡 How to say that instead:</span>
+                                          <span className="font-semibold italic bg-black/30 px-2 py-1 rounded block mt-0.5 text-emerald-100">&quot;{ins.how_to_say_instead}&quot;</span>
+                                        </div>
+                                      )}
+                                      {ins.why_say_that && (
+                                        <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-200 leading-relaxed">
+                                          <span className="font-bold text-cyan-300 block mb-0.5">🎯 Why say that:</span>
+                                          {ins.why_say_that}
+                                        </div>
+                                      )}
+                                      {ins.expected_impact && (
+                                        <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-200 leading-relaxed">
+                                          <span className="font-bold text-purple-300 block mb-0.5">🚀 What impact it makes:</span>
+                                          {ins.expected_impact}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {ins.quote && (
+                                    <p className="italic bg-black/50 p-2.5 rounded-xl text-slate-200 text-[11px] border border-white/10 mt-1">
+                                      &quot;{ins.quote}&quot;
+                                    </p>
+                                  )}
                                 </div>
-                                <p className="text-slate-300 leading-relaxed">{ins.text}</p>
-                                {ins.quote && (
-                                  <p className="italic bg-black/40 p-2 rounded-xl text-slate-200 mt-1 border border-white/10">
-                                    &quot;{ins.quote}&quot;
-                                  </p>
-                                )}
-                              </div>
-                            );
+                              );
                           })
                       ) : (
                         <p className="text-xs text-slate-400 italic">No coaching flags for this call.</p>

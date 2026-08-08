@@ -102,6 +102,11 @@ export interface Insight {
   type: 'positive' | 'negative' | 'improvement';
   title: string;
   text: string;
+  what_was_wrong?: string;
+  why_was_wrong?: string;
+  how_to_say_instead?: string;
+  why_say_that?: string;
+  expected_impact?: string;
   quote?: string;
   timestamp_ref?: string;
   linked_negative_id?: string;
