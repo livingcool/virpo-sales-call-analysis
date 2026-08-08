@@ -58,7 +58,7 @@ Grade against 100-Point CLOSER Rubric.
 
 CRITICAL AUDIT RULES:
 1. SUMMARY_TEXT: Make summary_text ultra-brief (1-2 sentences max). Explicitly answer: WHAT went wrong in this call and WHY it went wrong.
-2. LIST ALL UNDERPERFORMANCE FLAGS: Do NOT limit or skip any underperformance areas! List EVERY SINGLE negative flag, mistake, hesitation, weak statement, or missed closing opportunity in the transcript.
+2. EXHAUSTIVE CRITICAL NEGATIVES: Do NOT stop at 1 or 2 items! Audit every sentence of the call and list AT LEAST 4 to 8 exhaustive underperformance flags covering every weak line, price hesitation, soft ask, missed pain trigger, or unverified commitment.
 3. FOR EVERY SINGLE UNDERPERFORMANCE FLAG (in the "negatives" array), PROVIDE THIS 5-PART BREAKDOWN:
    - title: Short descriptive flag title.
    - what_was_wrong: Exact weak line or mistake made by executive.

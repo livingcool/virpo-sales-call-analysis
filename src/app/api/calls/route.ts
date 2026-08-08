@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // Attempt Supabase fetch with a 1.5s timeout for fast response
+    // Fetch calls from Supabase with full insights breakdown fields
     const fetchPromise = supabaseServer
       .from('calls')
       .select(`
@@ -40,6 +40,11 @@ export async function GET() {
             type,
             title,
             text,
+            what_was_wrong,
+            why_was_wrong,
+            how_to_say_instead,
+            why_say_that,
+            expected_impact,
             quote,
             timestamp_ref
           )
@@ -54,7 +59,7 @@ export async function GET() {
       .order('recorded_at', { ascending: false });
 
     const timeoutPromise = new Promise<{ data: null; error: Error }>((resolve) =>
-      setTimeout(() => resolve({ data: null, error: new Error('Supabase timeout') }), 1500)
+      setTimeout(() => resolve({ data: null, error: new Error('Supabase timeout') }), 2500)
     );
 
     const result = await Promise.race([fetchPromise, timeoutPromise]);
@@ -63,7 +68,7 @@ export async function GET() {
       return NextResponse.json({ calls: result.data });
     }
   } catch (err: unknown) {
-    console.warn('[Calls GET API Notice]: Supabase offline or host unreachable, using in-memory store:', err);
+    console.warn('[Calls GET API Notice]: Supabase query warning, using in-memory store:', err);
   }
 
   // Instant fallback to in-memory call store

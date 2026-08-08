@@ -235,6 +235,11 @@ export async function POST(req: NextRequest) {
               type: ins.type,
               title: ins.title,
               text: ins.text,
+              what_was_wrong: ins.what_was_wrong || null,
+              why_was_wrong: ins.why_was_wrong || null,
+              how_to_say_instead: ins.how_to_say_instead || null,
+              why_say_that: ins.why_say_that || null,
+              expected_impact: ins.expected_impact || null,
               quote: ins.quote,
               timestamp_ref: ins.timestamp_ref,
             }))

@@ -174,14 +174,19 @@ export default function DashboardPage() {
   };
 
   // Fetch calls live from Supabase API
-  const fetchCalls = async () => {
+  const fetchCalls = async (targetCallId?: string) => {
     setLoading(true);
     try {
       const res = await fetch('/api/calls');
       const data = await res.json();
       if (data.calls && data.calls.length > 0) {
         setCalls(data.calls);
-        setSelectedCall((prev) => prev || data.calls[0]);
+        if (targetCallId) {
+          const matched = data.calls.find((c: CallItem) => c.id === targetCallId);
+          if (matched) setSelectedCall(matched);
+        } else {
+          setSelectedCall((prev) => prev || data.calls[0]);
+        }
         return;
       }
     } catch (err) {
@@ -495,7 +500,7 @@ export default function DashboardPage() {
         setCalls((prev) => [newCall, ...prev.filter((c) => c.id !== newCall.id)]);
         setSelectedCall(newCall);
         handleTabChange('deepdive');
-        fetchCalls();
+        await fetchCalls(newCall.id);
       } else {
         alert('Ingestion Note: ' + (data.error || 'Check server logs'));
       }
