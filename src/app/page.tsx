@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 import { VirpoLogo } from '@/components/VirpoLogo';
 import {
   Mic,
@@ -113,6 +114,7 @@ export default function DashboardPage() {
   const [language, setLanguage] = useState<string>('Tanglish');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [pipelineStep, setPipelineStep] = useState<number>(0);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [countdownSeconds, setCountdownSeconds] = useState<number>(45);
 
   useEffect(() => {
@@ -331,7 +333,7 @@ export default function DashboardPage() {
     }
   };
 
-  // Upload Form Submission Handler
+  // Upload Form Submission Handler — uses direct Supabase Storage upload (no size limit)
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadFile) {
@@ -339,42 +341,55 @@ export default function DashboardPage() {
       return;
     }
 
-    // Guard: Vercel serverless limit is ~4.5 MB
-    const MAX_MB = 4;
-    if (uploadFile.size > MAX_MB * 1024 * 1024) {
-      alert(`File too large for Vercel serverless (${(uploadFile.size / 1024 / 1024).toFixed(1)} MB).\nMax allowed: ${MAX_MB} MB.\nTip: Compress the audio to MP3 128kbps or trim it under ${MAX_MB} MB before uploading.`);
-      return;
-    }
-
     setIsProcessing(true);
+    setUploadProgress(0);
     setPipelineStep(1);
-    setTimeout(() => setPipelineStep(2), 1200);
 
     try {
-      const formData = new FormData();
-      formData.append('file', uploadFile);
-      formData.append('leadName', leadName);
-      formData.append('city', city);
-      formData.append('execName', execName);
-      formData.append('language', language);
+      // ── Step 1: Ensure 'call-recordings' bucket exists ──────────────────────
+      await fetch('/api/presign', { method: 'POST' });
+
+      // ── Step 2: Upload directly to Supabase Storage (browser → Supabase) ───
+      // This completely bypasses Vercel — supports files up to 100 MB
+      const storagePath = `${Date.now()}_${uploadFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+
+      // Simulate upload progress (Supabase JS client doesn't expose progress natively)
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => (prev < 85 ? prev + 5 : prev));
+      }, 400);
+
+      const { error: storageErr } = await supabase.storage
+        .from('call-recordings')
+        .upload(storagePath, uploadFile, {
+          contentType: uploadFile.type || 'audio/mpeg',
+          upsert: true,
+        });
+
+      clearInterval(progressInterval);
+
+      if (storageErr) {
+        throw new Error(`Storage upload failed: ${storageErr.message}`);
+      }
+
+      setUploadProgress(100);
+      setPipelineStep(2);
+
+      // ── Step 3: Tell server the storage path — server fetches & processes ───
+      setTimeout(() => setPipelineStep(3), 800);
 
       const res = await fetch('/api/ingest', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storage_path: storagePath, leadName, city, execName, language }),
       });
 
-      setPipelineStep(3);
-
-      // Safe JSON parse — Vercel may return plain-text 413/500 before our handler runs
+      // Safe JSON parse — handle unexpected server errors
       let data: Record<string, unknown> = {};
-      const contentType = res.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
         data = await res.json();
       } else {
         const text = await res.text();
-        if (res.status === 413) {
-          throw new Error(`File too large — Vercel rejected the upload (413). Please compress your audio below 4 MB.`);
-        }
         throw new Error(`Server error ${res.status}: ${text.slice(0, 120)}`);
       }
 
@@ -392,6 +407,7 @@ export default function DashboardPage() {
       alert('Upload error: ' + message);
     } finally {
       setIsProcessing(false);
+      setUploadProgress(0);
       setPipelineStep(0);
     }
   };
@@ -1056,7 +1072,7 @@ export default function DashboardPage() {
             <div>
               <h2 className="text-lg font-bold text-white">Upload Call Recording</h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Supports audio &amp; MP4 recordings (.mp3 / .wav / .m4a / .mp4 up to 2 hours).
+                Files upload directly to Supabase Storage — <span className="text-emerald-400 font-bold">no file size limit</span>. Supports MP3, WAV, M4A, MP4.
               </p>
             </div>
             <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
@@ -1152,16 +1168,42 @@ export default function DashboardPage() {
                 <p className="text-xs font-bold text-white">
                   {uploadFile ? uploadFile.name : 'Click to select audio or MP4 file'}
                 </p>
-                <p className="text-[11px] text-slate-400">Supports files up to 2 hours with automatic VAD chunking</p>
+                {uploadFile ? (
+                  <p className="text-[11px] text-emerald-400 font-semibold">
+                    {(uploadFile.size / (1024 * 1024)).toFixed(1)} MB — uploads directly to Supabase Storage (no Vercel limit)
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-slate-400">Any size supported — uploads directly to Supabase, bypassing Vercel</p>
+                )}
               </label>
             </div>
+
+            {/* Upload progress bar — shows during direct Supabase upload phase */}
+            {isProcessing && uploadProgress > 0 && uploadProgress < 100 && (
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] text-slate-400">
+                  <span className="font-semibold">Uploading to Supabase Storage...</span>
+                  <span className="font-mono text-cyan-400">{uploadProgress}%</span>
+                </div>
+                <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-cyan-400 to-emerald-400 h-full rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={isProcessing}
               className="cursor-pointer w-full py-3.5 bg-white text-slate-950 font-bold text-xs rounded-full shadow-lg hover:bg-slate-200 transition-all disabled:opacity-50"
             >
-              {isProcessing ? 'Running Sarvam & Gemini Pipeline...' : 'Start Audio Pipeline Analysis'}
+              {isProcessing && uploadProgress > 0 && uploadProgress < 100
+                ? `Uploading to Supabase... ${uploadProgress}%`
+                : isProcessing
+                ? 'Running Sarvam & Gemini Pipeline...'
+                : 'Start Audio Pipeline Analysis'}
             </button>
           </form>
 
